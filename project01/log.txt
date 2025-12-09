@@ -19,3 +19,15 @@
 12/9/2025, 4:17:33 PM : PATCH : /api/users/6937fc9cc44ae02875e31aa7
 12/9/2025, 4:17:38 PM : GET : /api/users/6937fc9cc44ae02875e31aa7
 12/9/2025, 4:29:02 PM : GET : /users
+12/9/2025, 5:18:53 PM : GET : /api/users/6937fc9cc44ae02875e31aa7
+12/9/2025, 5:19:03 PM : GET : /api/users/
+12/9/2025, 5:19:56 PM : GET : /users
+12/9/2025, 5:20:33 PM : POST : /users/
+12/9/2025, 5:20:42 PM : POST : /users/
+12/9/2025, 5:20:54 PM : GET : /users/
+12/9/2025, 5:21:01 PM : GET : /users/69380d127cabf81b1e3089b0
+12/9/2025, 5:21:14 PM : PATCH : /users/69380d127cabf81b1e3089b0
+12/9/2025, 5:21:18 PM : GET : /users/69380d127cabf81b1e3089b0
+12/9/2025, 5:21:29 PM : DELETE : /users/69380d127cabf81b1e3089b0
+12/9/2025, 5:21:32 PM : GET : /users/69380d127cabf81b1e3089b0
+12/9/2025, 5:23:56 PM : GET : /api/user/
