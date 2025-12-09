@@ -8,6 +8,13 @@ const port = 3000;
 
 app.use(express.urlencoded({ extended: false }));
 
+app.use((req,res,next)=>{
+    fs.appendFile('log.txt', `${new Date(Date.now()).toLocaleString()} : ${req.method} : ${req.path}\n`, (err, data) => {
+        if (err) res.status(500).end(JSON.stringify(err));
+        next();
+    });
+})
+
 app.get('/users', (req, res) => {
     const html = `
     <ul>
