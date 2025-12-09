@@ -1,76 +1,116 @@
 const express = require('express');
 const fs = require('fs');
-const users = require('./MOCK_DATA.json');
-const {urlencoded} = require("express");
+const mongoose = require('mongoose');
 
 const app = express();
 const port = 3000;
 
+// Connection
+
+mongoose.connect('mongodb://localhost:27017/project01')
+.then(() => console.log('MongoDB Connected!'))
+.catch((err) => console.log(err));
+
+// Schema
+
+const userSchema = new mongoose.Schema({
+    firstName: {
+        type: String,
+        required: true,
+    },
+    lastName: {
+        type: String,
+        required: false,
+    },
+    email: {
+        type: String,
+        required: true,
+        lowercase: true,
+        unique: true,
+    },
+    gender: {
+        type: String,
+        required: true,
+        enum: ['male', 'female']
+    },
+    jobTitle: {
+        type: String,
+        required: true,
+    }
+},
+    {timestamps: true}
+);
+
+const User = mongoose.model('User', userSchema);
+
+//Middleware
+
 app.use(express.urlencoded({ extended: false }));
 
 app.use((req,res,next)=>{
-    fs.appendFile('log.txt', `${new Date(Date.now()).toLocaleString()} : ${req.method} : ${req.path}\n`, (err, data) => {
+    if (req.url === '/favicon.ico') {
+        next();
+    }
+    fs.appendFile('log.txt', `${new Date(Date.now()).toLocaleString()} : ${req.method} : ${req.path}\n`, (err) => {
         if (err) res.status(500).end(JSON.stringify(err));
         next();
     });
-})
+});
 
-app.get('/users', (req, res) => {
+// Routes
+
+app.get('/users', async (req, res) => {
+    const allDBUsers = await User.find({});
     const html = `
     <ul>
-        ${users.map(user => `<li>${user.first_name}</li>`).join('')}
+        ${allDBUsers.map(user => `<li>${user.firstName}, ${user.email}</li>`).join('')}
     </ul>
     `
     res.send(html);
 });
 
-app.get('/api/users', (req, res) => {
-    return res.json(users);
+app.get('/api/users', async (req, res) => {
+    const allDBUsers = await User.find({});
+    return res.json(allDBUsers);
 });
 
 
-app.post('/api/users', (req, res) => {
+app.post('/api/users', async (req, res) => {
     const body = req.body;
-    const searchValidation = !body || !body.first_name || !body.last_name || !body.email || !body.gender || !body.job_title
-    if (searchValidation) res.status(400).send(JSON.stringify({error:'Please fill all fields'}));
-    users.push({id: users.length + 1,...body});
-    fs.writeFile('./MOCK_DATA.json', JSON.stringify(users), (err,data) => {
-        if (err) return res.status(500).json({ status: 'error', message: 'Failed to add user' });
-        return res.status(201).json({status: 'success', id: users.length});
-    })
+    const searchValidation = !body || !body.first_name || !body.email || !body.gender || !body.job_title
+    if (searchValidation) res.status(400).send(JSON.stringify({error: 'Please fill all fields'}));
+    const addUser = await User.create({
+        firstName: body.first_name,
+        lastName: body.last_name,
+        email: body.email,
+        gender: body.gender,
+        jobTitle: body.job_title,
+    });
+    console.log("user", addUser);
+    return res.status(201).json({msg: 'User Created Successfully'});
 });
 
 app.route('/api/users/:id')
-    .get((req, res) => {
-        const id = Number(req.params.id);
-        const user = users.find(user => user.id === id);
+    .get(async (req, res) => {
+        const user = await User.findById(req.params.id);
         if (!user) return res.status(404).json({ error: "User not found" });
         return res.json(user);
     })
-    .patch((req, res) => {
-        const id = Number(req.params.id);
-        const body = req.body;
-        const user = users.find(u => u.id === id);
-        if (!user) return res.status(404).json({ error: "User not found" });
-
-        Object.assign(user, body);
-        fs.writeFile('./MOCK_DATA.json', JSON.stringify(users, null, 2), (err) => {
-            if (err) return res.status(500).json({ status: 'error', message: 'Failed to update user' });
-            return res.json({ status: 'updated', user });
-        });
+    .patch(async (req, res) => {
+        try {
+            await User.findByIdAndUpdate(req.params.id, req.body);
+            return res.status(200).json({ msg: 'User Updated Successfully' });
+        } catch (err) {
+            return res.status(400).json({ error: 'User not found' });
+        }
     })
-    .delete((req, res) => {
-        const id = Number(req.params.id);
-
-        const index = users.findIndex(u => u.id === id);
-        if (index === -1) return res.status(404).json({ error: "User not found" });
-
-        const deletedUser = users.splice(index, 1);
-
-        fs.writeFile('./MOCK_DATA.json', JSON.stringify(users, null, 2), (err) => {
-            if (err) return res.status(500).json({ status: 'error', message: 'Failed to delete user' });
-            return res.json({ status: 'deleted', user: deletedUser[0] });
-        });
+    .delete(async (req, res) => {
+        try {
+            await User.findByIdAndDelete(req.params.id);
+            return res.status(200).json({ msg: 'User Delete Successfully' });
+        } catch (err) {
+            return res.status(400).json({ error: 'User not found' });
+        }
     });
 
 app.listen(port, () => {
