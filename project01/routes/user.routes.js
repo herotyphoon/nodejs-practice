@@ -12,7 +12,7 @@ const Router = express.Router();
 
 Router.route('/')
     .get(handleGetAllUsers)
-    .post(handleCreateUser)
+    .post(handleCreateUse)
 
 Router.route('/:id')
     .get(handleGetUserByID)
